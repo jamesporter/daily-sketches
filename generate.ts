@@ -2,6 +2,8 @@ import rimraf from "rimraf"
 import path from "path"
 import fs from "fs"
 
+const config = JSON.parse(fs.readFileSync("package.json").toString()).dsConfig
+
 // 1. Add a new script for today (or if already for today and more, for next day without one)
 
 const sketchFs = fs.readdirSync(path.join("src", "sketches"))
@@ -16,7 +18,7 @@ const dateToEls = (date: Date): DateEls => [
 ]
 
 const lz = (n: number): string => (n < 10 ? `0${n}` : String(n))
-const range = (n: number): number[] => Array(n).map((_, i) => i + 1)
+const range = (n: number): number[] => [...Array(n).keys()].map(n => n + 1)
 const monthName = (n: number): string =>
   [
     "January",
@@ -91,31 +93,33 @@ fs.writeFileSync(
   `import { SCanvas, Rect, v } from "solandra"
 
 export default {
-  name: "${nextDate.toLocaleDateString()}",
+  name: "${lz(nextDay[2])} ${monthName(nextDay[1])} ${nextDay[0]}",
   notes: "",
+  play: false,
   sketch: (s: SCanvas) => {
-    s.background(215, 80, 20)
-    s.forTiling({ n: 10, type: "square", margin: 0.1 }, (p, d, c, i) => {
-      s.setFillColour(215 + i * 2, 100, 50)
-      const h = d[1] * s.random()
-      s.fill(new Rect({ at: v.add(p, [0, d[1] - h]), w: d[0], h }))
-    })
+    s.background(${Math.floor(Math.random() * 360)}, 80, ${
+    Math.random() > 0.5 ? "95" : "20"
+  })
   },
 }
 `
 )
 
-// 2. Remove al pages
+// 2. Remove all pages
 // TODO
+rimraf.sync(path.join("src", "pages"))
+fs.mkdirSync(path.join("src", "pages"))
 
 // 3. Create Month pages for all months (god this awful code)
-const yearsAndMonths = [...new Set(existing.map(([y, m]) => `${y}-${m}`))].map(
-  el => el.split("-").map(n => parseInt(n))
-)
-console.log(yearsAndMonths)
+const yearsAndMonths = [
+  ...new Set(existing.map(([y, m]) => `${y}-${lz(m)}`)),
+].map(el => el.split("-").map(n => parseInt(n)))
+
+const counts: { [key: string]: number } = {}
 
 yearsAndMonths.forEach(([y, m]) => {
   const sketches = existing.filter(el => el[0] === y && el[1] === m)
+  counts[`${y}${m}`] = sketches.length
   fs.writeFileSync(
     path.join("src", "pages", `${y}-${lz(m)}.tsx`),
     `import React from "react"
@@ -149,8 +153,9 @@ const IndexPage = () => (
     <SEO title="Home" />
 
     <Container>
-      <H1>${monthName(m)} 2019</H1>
-      <H3>By James Porter</H3>
+      <Link to="/" style={{ textDecoration: 'none' }}><H3>Daily Sketches</H3></Link>
+      <H1>${monthName(m)} ${y}</H1>
+      <H3>By ${config.name}</H3>
       <p>
         A series of algorithmic sketches, powered by{" "}
         <a href="https://solandra.netlify.com">Solandra</a>.
@@ -158,16 +163,21 @@ const IndexPage = () => (
 
       <Spacer large />
       <Grid>
-        {sketches.map((sk, i) => (
-          <PreviewContainer key={i}>
-          <FixedSizeCanvas
-            sketch={sk}
-            seed={1}
-            width={320}
-            height={320}
-          />
-        </PreviewContainer>
-        ))}
+${sketches
+  .map(
+    (sk, i) =>
+      `      <Link to="day-${sk[0]}-${lz(sk[1])}-${lz(sk[2])}">
+          <PreviewContainer>
+            <FixedSizeCanvas
+              sketch={sketches[${i}].sketch}
+              seed={1}
+              width={320}
+              height={320}
+            />
+          </PreviewContainer>
+        </Link>`
+  )
+  .join("\n")}
       </Grid>
     </Container>
   </Layout>
@@ -183,6 +193,7 @@ fs.writeFileSync(
   path.join("src", "pages", `index.tsx`),
   `import React from "react"
 import { Link } from "gatsby"
+import { FixedSizeCanvas } from "solandra-react"
 
 import Layout from "../components/layout"
 import SEO from "../components/seo"
@@ -212,7 +223,7 @@ const IndexPage = () => (
 
     <Container>
       <H1>Daily Sketches</H1>
-      <H3>By James Porter</H3>
+      <H3>By ${config.name}</H3>
       <p>
         A series of algorithmic sketches, powered by{" "}
         <a href="https://solandra.netlify.com">Solandra</a>.
@@ -224,20 +235,32 @@ const IndexPage = () => (
 
       <Spacer />
       <Grid>
-        {sketches.map((sk, i) => (
-          <PreviewContainer key={i}>
+${sketches
+  .map(
+    (sk, i) =>
+      `      <Link to="day-${sk[0]}-${lz(sk[1])}-${lz(sk[2])}">
+        <PreviewContainer>
           <FixedSizeCanvas
-            sketch={sk}
+            sketch={sketches[${i}].sketch}
             seed={1}
             width={320}
             height={320}
           />
         </PreviewContainer>
-        ))}
+      </Link>`
+  )
+  .join("\n")}
       </Grid>
 
 ${yearsAndMonths
-  .map(([y, m]) => `<Link to="./${y}-${lz(m)}">${monthName(m)} ${y}</Link>`)
+  .map(
+    ([y, m]) =>
+      `<Link to="./${y}-${lz(
+        m
+      )}" style={{ textDecoration: "none", paddingBottom: 10 }}><h2>${
+        counts[`${y}${m}`]
+      } in ${monthName(m)} ${y}</h2></Link>`
+  )
   .join("\n")}
     </Container>
   </Layout>
@@ -247,7 +270,43 @@ export default IndexPage
 `
 )
 
-// 5. Create 404 page
+// 5. Create individual pages (full screen render)
+
+existing.forEach(([ey, em, ed]) => {
+  fs.writeFileSync(
+    path.join("src", "pages", `day-${ey}-${lz(em)}-${lz(ed)}.tsx`),
+    `import React from "react"
+import { Link } from "gatsby"
+import { FullScreenCanvas } from "solandra-react"
+
+import Layout from "../components/layout"
+import SEO from "../components/seo"
+import {
+  Container,
+  H1,
+  H2,
+  H3,
+  Spacer,
+  Grid,
+  PreviewContainer,
+} from "../components/Elements"
+
+import sketch from "../sketches/${ey}-${lz(em)}-${lz(ed)}"
+const DayPage = () => (
+  <Layout>
+    <SEO title="Home" />
+    <FullScreenCanvas
+      sketch={sketch.sketch}
+      seed={1}
+    />
+  </Layout>
+)
+
+export default DayPage`
+  )
+})
+
+// 6. Create 404 page
 fs.writeFileSync(
   path.join("src", "pages", `404.tsx`),
   `import React from "react"

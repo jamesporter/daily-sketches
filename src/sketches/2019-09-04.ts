@@ -3,6 +3,7 @@ import { SCanvas, Rect, v } from "solandra"
 export default {
   name: "Crystals",
   notes: "",
+  play: false,
   sketch: (s: SCanvas) => {
     s.background(215, 80, 20)
     s.forTiling({ n: 10, type: "square", margin: 0.1 }, (p, d, c, i) => {
