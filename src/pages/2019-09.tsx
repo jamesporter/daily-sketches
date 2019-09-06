@@ -17,8 +17,7 @@ import {
 import s01 from "../sketches/2019-09-06"
 import s02 from "../sketches/2019-09-05"
 import s03 from "../sketches/2019-09-04"
-import s04 from "../sketches/2019-09-07"
-const sketches = [s01, s02, s03, s04]
+const sketches = [s01, s02, s03]
 
 const IndexPage = () => (
   <Layout>
@@ -42,6 +41,7 @@ const IndexPage = () => (
               seed={1}
               width={320}
               height={320}
+              playing={sketches[0].play}
             />
           </PreviewContainer>
         </Link>
@@ -52,6 +52,7 @@ const IndexPage = () => (
               seed={1}
               width={320}
               height={320}
+              playing={sketches[1].play}
             />
           </PreviewContainer>
         </Link>
@@ -62,16 +63,7 @@ const IndexPage = () => (
               seed={1}
               width={320}
               height={320}
-            />
-          </PreviewContainer>
-        </Link>
-      <Link to="day-2019-09-07">
-          <PreviewContainer>
-            <FixedSizeCanvas
-              sketch={sketches[3].sketch}
-              seed={1}
-              width={320}
-              height={320}
+              playing={sketches[2].play}
             />
           </PreviewContainer>
         </Link>

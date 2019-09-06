@@ -8,6 +8,6 @@ Create algorithmic art everyday.
 
 [Sample deploy](https://daily-sketches.netlify.com)
 
-customise the config in package.json, especially the dsConfig stuff
+Customise the config in package.json, especially the dsConfig stuff. The styling is intentionally basic, you probably will want to customise.
 
-The styling is basic, you will want to customise.
+**NB Don't edit files in pages directory as these get generated.** Instead customise the generated code in `generate.ts`

@@ -21,6 +21,7 @@ const DayPage = () => (
     <FullScreenCanvas
       sketch={sketch.sketch}
       seed={1}
+      playing={sketch.play}
     />
   </Layout>
 )

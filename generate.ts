@@ -60,9 +60,7 @@ const existing = sketchFs
     return a1 > b1 || a2 > b2 || a3 > b3 ? -1 : 1
   }) as DateEls[]
 
-console.log({ existing })
-
-const mostRecent = existing[0]
+const mostRecent = existing[0] || [0, 0, 0]
 let nextDay: DateEls
 let nextDate: Date
 
@@ -70,10 +68,8 @@ const [ty, tm, td] = today
 const [ny, nm, nd] = mostRecent
 
 if (!(ty <= ny || tm <= nm || td <= nd)) {
-  console.log("Create for today")
   nextDay = today
 } else {
-  console.log("Creating for next available day")
   nextDay = dateToEls(
     new Date(mostRecent[0], mostRecent[1] - 1, mostRecent[2] + 1)
   )
@@ -82,7 +78,7 @@ nextDate = new Date(nextDay[0], nextDay[1] - 1, nextDay[2])
 console.log(`Next date is: ${nextDate.toLocaleDateString()}`)
 
 // rather than re-reading:
-existing.push(nextDay)
+existing.unshift(nextDay)
 
 fs.writeFileSync(
   path.join(
@@ -173,6 +169,7 @@ ${sketches
               seed={1}
               width={320}
               height={320}
+              playing={sketches[${i}].play}
             />
           </PreviewContainer>
         </Link>`
@@ -245,6 +242,7 @@ ${sketches
             seed={1}
             width={320}
             height={320}
+            playing={sketches[${i}].play}
           />
         </PreviewContainer>
       </Link>`
@@ -298,6 +296,7 @@ const DayPage = () => (
     <FullScreenCanvas
       sketch={sketch.sketch}
       seed={1}
+      playing={sketch.play}
     />
   </Layout>
 )
