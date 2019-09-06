@@ -30,12 +30,7 @@ const IndexPage = () => (
       <H2>Latest</H2>
 
       <Spacer />
-      <Grid>
-        <PreviewContainer />
-        <PreviewContainer />
-        <PreviewContainer />
-        <PreviewContainer />
-      </Grid>
+      <Grid></Grid>
 
       <Link to="./2019-09">September 2019</Link>
     </Container>
